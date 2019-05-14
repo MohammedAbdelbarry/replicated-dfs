@@ -44,6 +44,7 @@ public class FileHandler {
 
     public void flush() throws IOException {
         writer.flush();
+        writer.close();
         Files.copy(tempPath, file.toPath());
         Files.delete(tempPath);
         prepareTempFile(file.getName());
