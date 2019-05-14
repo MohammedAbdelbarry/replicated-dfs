@@ -2,7 +2,7 @@ package master;
 
 public class WriteMsg {
 	private long transactionId;
-	private  long timeStamp;
+	private long timeStamp;
 	private ReplicaLoc loc;
 
 	public WriteMsg(long transactionId, long timeStamp, ReplicaLoc loc) {

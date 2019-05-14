@@ -18,11 +18,11 @@ public class FileHandler {
         rwLock = new ReentrantReadWriteLock();
     }
 
-    private ReadWriteLock getLock() {
+    public ReadWriteLock getLock() {
         return rwLock;
     }
 
-    public String read(int rid) throws IOException {
+    public String read() throws IOException {
         byte[] bytes = Files.readAllBytes(file.toPath());
         return new String(bytes);
     }
