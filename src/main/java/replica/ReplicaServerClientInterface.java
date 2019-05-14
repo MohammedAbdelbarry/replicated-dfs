@@ -1,9 +1,13 @@
+package replica;
+
+import master.FileContent;
+import master.MessageNotFoundException;
+import master.WriteMsg;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
-
-import test.MessageNotFoundException;
 
 public interface ReplicaServerClientInterface extends Remote {
 	/**
