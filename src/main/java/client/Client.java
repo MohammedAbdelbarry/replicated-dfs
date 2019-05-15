@@ -27,7 +27,7 @@ public class Client {
         }
 
         public void addWrite(FileContent file) throws IOException, NotBoundException {
-            if (primaryReplicaStub == null && writeMsg == null) {
+            if (primaryReplicaStub == null || writeMsg == null) {
                 WriteMsg writeMsg = master.write(file);
                 primaryReplicaStub = (ReplicaServerClientInterface) RmiRunner.lookupStub(writeMsg.getLoc().getHost(), writeMsg.getLoc().getPort(), writeMsg.getLoc().getRmiKey());
                 primaryReplicaStub.write(writeMsg.getTransactionId(), seqNo++, file);
