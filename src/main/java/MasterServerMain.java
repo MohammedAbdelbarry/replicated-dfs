@@ -15,8 +15,8 @@ public class MasterServerMain {
         String replicasFilePath = masterConfiguration.getReplicasFilePath();
         MasterServer masterServer = new MasterServer(replicasFilePath, replicationFactor);
         RmiRunner rmiRunner = new RmiRunner();
+        rmiRunner.createRegistry(rmiPort);
         try {
-            rmiRunner.createRegistry(rmiPort);
             rmiRunner.publishStub(masterServer, rmiKey, rmiPort);
         } catch (RemoteException e) {
             e.printStackTrace();
