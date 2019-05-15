@@ -45,11 +45,14 @@ public class MasterServer implements MasterServerClientInterface {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
+
+        //TODO: Uncomment this
+        this.trackHeartbeats();
     }
 
     public ReplicaLoc[] read(final String fileName) throws FileNotFoundException,
             IOException, RemoteException, NotBoundException {
-        //TODO: lock the global replica lock before checking on hashmaps
+        replicaLock.lock();
         if (!primaryReplicas.containsKey(fileName)){
             throw new FileNotFoundException();
         }
@@ -60,19 +63,21 @@ public class MasterServer implements MasterServerClientInterface {
         ReplicaServerClientInterface primaryReplicaStub = (ReplicaServerClientInterface) RmiRunner.lookupStub(primaryReplica.getHost(),
                                                                 primaryReplica.getPort(), primaryReplica.getRmiKey());
 
-        if(!primaryReplicaStub.fileExists(fileName)){
+        if (!primaryReplicaStub.fileExists(fileName))
             throw new FileNotFoundException();
-        }
+
         ArrayList<ReplicaLoc> replicas = new ArrayList<>(fileToReplicas.get(fileName));
+        replicaLock.unlock();
         replicas.add(primaryReplica);
         return replicas.toArray(new ReplicaLoc[replicas.size()]);
     }
 
     public WriteMsg write(FileContent file) throws RemoteException, IOException {
-        //TODO: lock the global replica lock before checking on hashmaps
         Date date = new Date();
         long timestamp = date.getTime();
-        if(!primaryReplicas.containsKey(file.getFileName())){
+
+        replicaLock.lock();
+        if (!primaryReplicas.containsKey(file.getFileName())) {
             int[] rand = new Random().ints(0,replicaServers.size()).distinct().limit(replicationFactor).toArray();
             primaryReplicas.put(file.getFileName(), replicaServers.get(rand[0]));
 
@@ -82,7 +87,10 @@ public class MasterServer implements MasterServerClientInterface {
             }
             fileToReplicas.put(file.getFileName(), replicas);
         }
-        return new WriteMsg(++lastTransaction, timestamp, primaryReplicas.get(file.getFileName()));
+        ReplicaLoc primaryReplica = primaryReplicas.get(file.getFileName());
+        replicaLock.unlock();
+
+        return new WriteMsg(++lastTransaction, timestamp, primaryReplica);
     }
 
     public ArrayList<ReplicaLoc> getReplicas(String fileName) {
