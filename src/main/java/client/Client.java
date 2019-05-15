@@ -21,27 +21,26 @@ public class Client {
         private ReplicaServerClientInterface primaryReplicaStub;
         private int seqNo;
 
-        public Transaction() {
+        public Transaction(String fileName) throws IOException, NotBoundException {
             writeMsg = null;
             primaryReplicaStub = null;
+            init(fileName);
         }
 
-        public void addWrite(FileContent file) throws IOException, NotBoundException {
-            if (primaryReplicaStub == null || writeMsg == null) {
-                WriteMsg writeMsg = master.write(file);
-                primaryReplicaStub = (ReplicaServerClientInterface) RmiRunner.lookupStub(writeMsg.getLoc().getHost(), writeMsg.getLoc().getPort(), writeMsg.getLoc().getRmiKey());
-                primaryReplicaStub.write(writeMsg.getTransactionId(), seqNo++, file);
-            } else {
-                primaryReplicaStub.write(writeMsg.getTransactionId(), seqNo++, file);
-            }
+        public void init(String fileName) throws IOException, NotBoundException {
+            writeMsg = master.write(new FileContent(fileName, null));
+            primaryReplicaStub = (ReplicaServerClientInterface) RmiRunner.lookupStub(writeMsg.getLoc().getHost(), writeMsg.getLoc().getPort(), writeMsg.getLoc().getRmiKey());
+        }
+
+        public void addWrite(FileContent file) throws IOException {
+            System.out.println(String.format("AddWrite(%s)", file));
+            System.out.println(String.format("primaryReplicaStub=%s", primaryReplicaStub));
+            System.out.println(String.format("writeMsg=%s", writeMsg));
+            primaryReplicaStub.write(writeMsg.getTransactionId(), seqNo++, file);
         }
 
         public boolean commit() throws MessageNotFoundException, RemoteException {
-            if (primaryReplicaStub != null && writeMsg != null) {
-                return primaryReplicaStub.commit(writeMsg.getTransactionId(), seqNo);
-            } else {
-                return true; //empty transaction
-            }
+            return primaryReplicaStub.commit(writeMsg.getTransactionId(), seqNo);
         }
     }
     
@@ -58,8 +57,8 @@ public class Client {
         return primaryReplicaStub.read(fileName);
     }
 
-    public Transaction createTransaction(){
-        return new Transaction();
+    public Transaction createTransaction(String fileName) throws IOException, NotBoundException {
+        return new Transaction(fileName);
     }
 
 
@@ -86,7 +85,7 @@ public class Client {
             System.out.println("File doesn't exist as expected");
         }
 
-        Transaction t = client.createTransaction();
+        Transaction t = client.createTransaction(fileName);
         t.addWrite(new FileContent(fileName, "datadatadata1"));
         t.addWrite(new FileContent(fileName, "datadatadata2"));
 

@@ -36,8 +36,10 @@ public class ReplicaServer implements ReplicaServerClientInterface {
     }
 
     public WriteMsg write(long txnID, long msgSeqNum, FileContent data) throws RemoteException, IOException {
+        System.out.println(String.format("Write(%d, %s)", txnID, data.getFileName()));
         transactionFile.putIfAbsent(txnID, data.getFileName());
         lockingTransactionLock.lock();
+        System.out.println(String.format("Lock(%d, %s)", txnID, "lockingTransactionLock"));
         while (lockingTransaction.containsKey(data.getFileName()) && lockingTransaction.get(data.getFileName()) != txnID) {
             lockingTransactionLock.unlock();
             try {
@@ -49,20 +51,26 @@ public class ReplicaServer implements ReplicaServerClientInterface {
         }
         lockingTransaction.put(data.getFileName(), txnID);
         lockingTransactionLock.unlock();
+        System.out.println(String.format("Unlock(%d, %s)", txnID, "lockingTransactionLock"));
 
         FileHandler fileHandler = FileHandlerPool.getInstance().getHandler(data.getFileName());
 
         fileHandler.getLock().writeLock().lock();
+        System.out.println(String.format("Write-Lock(%d, %s)", txnID, data.getFileName()));
         fileHandler.write(data.getData());
         fileHandler.getLock().writeLock().unlock();
+        System.out.println(String.format("Write-Unlock(%d, %s)", txnID, data.getFileName()));
         return null;
     }
 
     public FileContent read(String fileName) throws FileNotFoundException, IOException, RemoteException {
+        System.out.println(String.format("Read(%s)", fileName));
         FileHandler fileHandler = FileHandlerPool.getInstance().getHandler(fileName);
         fileHandler.getLock().readLock().lock();
+        System.out.println(String.format("Read-Lock(%s)", fileName));
         FileContent content = new FileContent(fileName, fileHandler.read());
         fileHandler.getLock().readLock().unlock();
+        System.out.println(String.format("Read-Unlock(%s)", fileName));
         return content;
     }
 
