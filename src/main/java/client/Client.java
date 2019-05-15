@@ -40,6 +40,9 @@ public class Client {
         }
 
         public boolean commit() throws MessageNotFoundException, RemoteException {
+            System.out.println(String.format("Commit(%d)", writeMsg.getTransactionId()));
+            System.out.println(String.format("primaryReplicaStub=%s", primaryReplicaStub));
+            System.out.println(String.format("writeMsg=%s", writeMsg));
             return primaryReplicaStub.commit(writeMsg.getTransactionId(), seqNo);
         }
     }

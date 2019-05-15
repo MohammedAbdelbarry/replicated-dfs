@@ -25,7 +25,7 @@ public class ReplicaServerMain {
             e.printStackTrace();
             return;
         }
-        ReplicaServer replicaServer = new ReplicaServer(masterServerStub);
+        ReplicaServer replicaServer = new ReplicaServer(rmiKey, masterServerStub);
         RmiRunner.createRegistry(rmiPort);
         try {
             RmiRunner.publishStub(replicaServer, rmiKey, rmiPort);
