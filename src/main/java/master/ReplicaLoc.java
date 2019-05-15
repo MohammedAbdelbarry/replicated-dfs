@@ -22,4 +22,17 @@ public class ReplicaLoc {
     public String getRmiKey() {
         return rmiKey;
     }
+
+    @Override
+    public String toString() {
+        return host + ":" + port + ":" + rmiKey;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        ReplicaLoc replicaLoc = (ReplicaLoc) o;
+        return  this.host.equals(replicaLoc.getHost()) &&
+                this.port == replicaLoc.getPort() &&
+                this.rmiKey.equals(replicaLoc.getRmiKey());
+    }
 }
