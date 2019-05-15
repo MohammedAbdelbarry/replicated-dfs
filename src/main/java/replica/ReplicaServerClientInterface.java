@@ -53,4 +53,8 @@ public interface ReplicaServerClientInterface extends Remote {
 	 * @throws RemoteException
 	 */
     boolean abort(long txnID) throws RemoteException;
+
+	default boolean isAlive() throws RemoteException {
+		return true;
+	}
 }

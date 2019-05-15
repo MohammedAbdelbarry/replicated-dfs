@@ -1,29 +1,37 @@
 package master;
 
+import replica.ReplicaServerClientInterface;
+import rmi.RmiRunner;
+
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Random;
+import java.util.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 public class MasterServer implements MasterServerClientInterface {
-    private HashMap<String, ReplicaLoc> primaryReplicas;
     private ArrayList<ReplicaLoc> replicaServers;
+    private HashMap<String, ReplicaLoc> primaryReplicas;
     private HashMap<String, ArrayList<ReplicaLoc>> fileToReplicas;
+    private Lock replicaLock;
     private long lastTransaction;
     private int replicationFactor;
+    private Timer heartbeatTimer;
 
     public MasterServer(final String replicasFilePath, final int replicationFactor) {
         fileToReplicas = new HashMap<>();
         primaryReplicas = new HashMap<>();
         replicaServers = new ArrayList<>();
+        replicaLock = new ReentrantLock();
+        heartbeatTimer = new Timer(true);
         this.replicationFactor = replicationFactor;
         this.lastTransaction = -1;
+
         try {
             BufferedReader bufferReader = new BufferedReader(new FileReader(replicasFilePath));
             String line;
@@ -41,7 +49,8 @@ public class MasterServer implements MasterServerClientInterface {
 
     public ReplicaLoc[] read(final String fileName) throws FileNotFoundException,
             IOException, RemoteException, NotBoundException {
-        if(!primaryReplicas.containsKey(fileName)){
+        //TODO: lock the global replica lock before checking on hashmaps
+        if (!primaryReplicas.containsKey(fileName)){
             throw new FileNotFoundException();
         }
 
@@ -63,6 +72,7 @@ public class MasterServer implements MasterServerClientInterface {
     }
 
     public WriteMsg write(FileContent file) throws RemoteException, IOException {
+        //TODO: lock the global replica lock before checking on hashmaps
         Date date = new Date();
         long timestamp = date.getTime();
         if(!primaryReplicas.containsKey(file.getFileName())){
@@ -80,5 +90,36 @@ public class MasterServer implements MasterServerClientInterface {
 
     public ArrayList<ReplicaLoc> getReplicas(String fileName) {
         return fileToReplicas.get(fileName);
+    }
+
+    public void trackHeartbeats() {
+        TimerTask heartbeatTask = new TimerTask() {
+            @Override
+            public void run() {
+                replicaLock.lock();
+                replicaServers.forEach(replicaServer -> {
+                    RmiRunner replicaRmiRunner = new RmiRunner();
+                    try {
+                        ReplicaServerClientInterface stub = (ReplicaServerClientInterface) replicaRmiRunner.lookupStub(
+                                replicaServer.getHost(), replicaServer.getPort(), replicaServer.getRmiKey());
+                        stub.isAlive();
+                    } catch (RemoteException | NotBoundException e) {
+                        System.err.println("Replica server: " + replicaServer + " went down!");
+                        /* Assign the files belonging primarily to this primary replica to another replica
+                           making it the new primary replica */
+                        List<String> filesInFailingReplica = primaryReplicas.keySet().stream().filter(
+                                file -> primaryReplicas.get(file).equals(replicaServer)).collect(Collectors.toList());
+                        filesInFailingReplica.forEach(file -> primaryReplicas.put(
+                                file, replicaServers.get(new Random().nextInt(replicaServers.size()))));
+                        filesInFailingReplica.forEach(file -> {
+                            fileToReplicas.get(file).remove(primaryReplicas.get(file));
+                            fileToReplicas.get(file).add(replicaServer);
+                        });
+                    }
+                });
+                replicaLock.unlock();
+            }
+        };
+        heartbeatTimer.scheduleAtFixedRate(heartbeatTask, 0, 1000);
     }
 }
