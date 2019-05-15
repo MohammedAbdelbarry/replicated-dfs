@@ -17,8 +17,6 @@ public class Client {
 
     public class Transaction {
 
-        private MasterServerClientInterface master;
-
         private WriteMsg writeMsg;
         private ReplicaServerClientInterface primaryReplicaStub;
         private int seqNo;
@@ -29,7 +27,7 @@ public class Client {
         }
 
         public void addWrite(FileContent file) throws IOException, NotBoundException {
-            if (primaryReplicaStub != null && writeMsg == null) {
+            if (primaryReplicaStub == null && writeMsg == null) {
                 WriteMsg writeMsg = master.write(file);
                 primaryReplicaStub = (ReplicaServerClientInterface) RmiRunner.lookupStub(writeMsg.getLoc().getHost(), writeMsg.getLoc().getPort(), writeMsg.getLoc().getRmiKey());
                 primaryReplicaStub.write(writeMsg.getTransactionId(), seqNo++, file);
@@ -47,16 +45,15 @@ public class Client {
         }
     }
     
-    private ReplicaLoc master;
-    private MasterServerClientInterface masterStub;
+    private MasterServerClientInterface master;
 
-    public Client(ReplicaLoc master) throws RemoteException, NotBoundException {
+
+    public Client(MasterServerClientInterface master) throws RemoteException, NotBoundException {
         this.master = master;
-        masterStub = (MasterServerClientInterface) RmiRunner.lookupStub(master.getHost(), master.getPort(), master.getRmiKey());
     }
 
     public FileContent read(String fileName) throws IOException, NotBoundException {
-        ReplicaLoc[] replicaLocs = masterStub.read(fileName);
+        ReplicaLoc[] replicaLocs = master.read(fileName);
         ReplicaServerClientInterface primaryReplicaStub = (ReplicaServerClientInterface) RmiRunner.lookupStub(replicaLocs[0].getHost(), replicaLocs[0].getPort(), replicaLocs[0].getRmiKey());
         return primaryReplicaStub.read(fileName);
     }
@@ -78,8 +75,10 @@ public class Client {
 
         String fileName = "file.txt";
 
-        ReplicaLoc replicaLoc = new ReplicaLoc(host, port, rmiKey);
-        Client client = new Client(replicaLoc);
+        MasterServerClientInterface masterStub = (MasterServerClientInterface) RmiRunner.lookupStub(host,
+                port, rmiKey);
+
+        Client client = new Client(masterStub);
 
         try {
             client.read(fileName);

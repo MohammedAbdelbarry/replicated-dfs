@@ -1,9 +1,12 @@
 package master;
 
-public class FileContent {
+import java.io.Serializable;
+
+public class FileContent implements Serializable {
 
     private String fileName;
     private String data;
+    private static final long serialVersionUID = 1L;
 
     public FileContent(String fileName, String data) {
         this.fileName = fileName;
