@@ -8,8 +8,8 @@ import java.rmi.RemoteException;
 public class ReplicaServerMain {
 
     public static void main(String[] args) {
-        if (args.length > 5) {
-            throw new IllegalArgumentException("Invalid number of arguments");
+        if (args.length != 5) {
+            throw new IllegalArgumentException(String.format("Invalid number of arguments expected %d but found %d", 5, args.length));
         }
         int rmiPort = Integer.parseInt(args[0]);
         String rmiKey = args[1];
