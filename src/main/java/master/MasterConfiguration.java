@@ -15,13 +15,16 @@ public class MasterConfiguration {
     private static final String REPLICATION_FACTOR_VALUE = "3";
     private static final String RMI_KEY_KEY = "rmi.key";
     private static final String RMI_KEY_VALUE = "master";
-    private static final String REPLICAS_FILEPATH_KEY = "rm.replicas.filepath";
+    private static final String REPLICAS_FILEPATH_KEY = "rmi.replicas.filepath";
     private static final String REPLICAS_FILEPATH_VALUE = "replicasConfig.txt";
+    private static final String LOCAL_ADDRESS_KEY = "rmi.local.address";
+    private static final String LOCAL_ADDRESS_VALUE = "localhost";
 
     private int rmiPort;
     private String rmiKey;
     private int replicationFactor;
     private String replicasFilePath;
+    private String localAddress;
 
     public MasterConfiguration(final String filePath) {
         File file = new File(filePath);
@@ -31,6 +34,7 @@ public class MasterConfiguration {
             properties.setProperty(RMI_KEY_KEY, RMI_KEY_VALUE);
             properties.setProperty(REPLICATION_FACTOR_KEY, REPLICATION_FACTOR_VALUE);
             properties.setProperty(REPLICAS_FILEPATH_KEY, REPLICAS_FILEPATH_VALUE);
+            properties.setProperty(LOCAL_ADDRESS_KEY, LOCAL_ADDRESS_VALUE);
             try (OutputStream outputStream = new FileOutputStream(file)) {
                 properties.store(outputStream, "Master Server Configuration File");
             } catch (IOException e) {
@@ -44,6 +48,7 @@ public class MasterConfiguration {
             rmiKey = properties.getProperty(RMI_KEY_KEY, RMI_KEY_VALUE);
             replicationFactor = Integer.parseInt(properties.getProperty(REPLICATION_FACTOR_KEY, REPLICATION_FACTOR_VALUE));
             replicasFilePath = properties.getProperty(REPLICAS_FILEPATH_KEY, REPLICAS_FILEPATH_VALUE);
+            localAddress = properties.getProperty(LOCAL_ADDRESS_KEY, LOCAL_ADDRESS_VALUE);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -63,5 +68,9 @@ public class MasterConfiguration {
 
     public String getReplicasFilePath() {
         return replicasFilePath;
+    }
+
+    public String getLocalAddress() {
+        return localAddress;
     }
 }

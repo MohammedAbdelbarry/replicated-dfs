@@ -14,13 +14,8 @@ public class RmiRunner {
 
     }
 
-    public static boolean createRegistry(final int registryPort) {
-        try {
-            InetAddress inetAddress = InetAddress.getLocalHost();
-            System.setProperty("java.rmi.server.hostname", inetAddress.getHostAddress());
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        }
+    public static boolean createRegistry(String host, final int registryPort) {
+        System.setProperty("java.rmi.server.hostname", host);
         try {
             LocateRegistry.createRegistry(registryPort);
             return true;

@@ -8,7 +8,7 @@ import java.rmi.RemoteException;
 public class ReplicaServerMain {
 
     public static void main(String[] args) {
-        if (args.length > 5) {
+        if (args.length > 6) {
             throw new IllegalArgumentException("Invalid number of arguments");
         }
         int rmiPort = Integer.parseInt(args[0]);
@@ -16,6 +16,10 @@ public class ReplicaServerMain {
         String serverHost = args[2];
         int serverPort = Integer.parseInt(args[3]);
         String serverRmiKey = args[4];
+        String localAddress = "localhost";
+        if (args.length == 6) {
+            localAddress = args[5];
+        }
         MasterServerClientInterface masterServerStub;
         try {
             masterServerStub = (MasterServerClientInterface) RmiRunner.lookupStub(serverHost, serverPort, serverRmiKey);
@@ -26,7 +30,7 @@ public class ReplicaServerMain {
             return;
         }
         ReplicaServer replicaServer = new ReplicaServer(rmiKey, masterServerStub);
-        RmiRunner.createRegistry(rmiPort);
+        RmiRunner.createRegistry(localAddress, rmiPort);
         try {
             RmiRunner.publishStub(replicaServer, rmiKey, rmiPort);
         } catch (RemoteException e) {
