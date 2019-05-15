@@ -1,8 +1,5 @@
 package master;
 
-import replica.ReplicaServerClientInterface;
-import rmi.RmiRunner;
-
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -15,32 +12,34 @@ import java.util.HashMap;
 import java.util.Random;
 
 public class MasterServer implements MasterServerClientInterface {
-
     private HashMap<String, ReplicaLoc> primaryReplicas;
     private ArrayList<ReplicaLoc> replicaServers;
     private HashMap<String, ArrayList<ReplicaLoc>> fileToReplicas;
     private long lastTransaction;
-    private int replicaFactor;
+    private int replicationFactor;
 
-    public MasterServer(String replicaFilePath, int replicaFactor){
+    public MasterServer(final String replicasFilePath, final int replicationFactor) {
         fileToReplicas = new HashMap<>();
         primaryReplicas = new HashMap<>();
         replicaServers = new ArrayList<>();
-        this.replicaFactor = replicaFactor;
+        this.replicationFactor = replicationFactor;
         this.lastTransaction = -1;
         try {
-            BufferedReader bufferreader = new BufferedReader(new FileReader(replicaFilePath));
+            BufferedReader bufferReader = new BufferedReader(new FileReader(replicasFilePath));
             String line;
-            while ((line = bufferreader.readLine()) != null) {
+            while ((line = bufferReader.readLine()) != null) {
                 String[] tokens = line.split(" ");
-                replicaServers.add(new ReplicaLoc(tokens[0], tokens[1]));
+                String replicaHost = tokens[0];
+                int replicaPort = Integer.parseInt(tokens[1]);
+                String replicaRmiKey = tokens[2];
+                replicaServers.add(new ReplicaLoc(replicaHost, replicaPort, replicaRmiKey));
             }
         } catch (Exception ex) {
             ex.printStackTrace();
         }
     }
 
-    public ReplicaLoc[] read(String fileName) throws FileNotFoundException,
+    public ReplicaLoc[] read(final String fileName) throws FileNotFoundException,
             IOException, RemoteException, NotBoundException {
         if(!primaryReplicas.containsKey(fileName)){
             throw new FileNotFoundException();
@@ -49,26 +48,25 @@ public class MasterServer implements MasterServerClientInterface {
         ReplicaLoc primaryReplica = primaryReplicas.get(fileName);
 
         // call primary replica to check if file exists replicaLoc.getIp();
-        RmiRunner rmiRunner = new RmiRunner(primaryReplica.getIp());
-        ReplicaServerClientInterface primaryReplicaStub = (ReplicaServerClientInterface) rmiRunner.lookupStub(primaryReplica.getRmiKey());
+//        RmiRunner rmiRunner = new RmiRunner(primaryReplica.getIp());
+//        ReplicaServerClientInterface primaryReplicaStub = (ReplicaServerClientInterface) rmiRunner.lookupStub(primaryReplica.getIp(),
+//                                                                primaryReplica.getPort(), primaryReplica.getRmiKey());
 
         //boolean fileExists = primaryReplicaStub.fileExists(fileName);
         boolean fileExists = true;
         if(!fileExists){
             throw new FileNotFoundException();
         }
-
-        ArrayList<ReplicaLoc> replicas = new ArrayList<>();
-   ;    replicas.addAll(fileToReplicas.get(fileName));
+        ArrayList<ReplicaLoc> replicas = new ArrayList<>(fileToReplicas.get(fileName));
         replicas.add(primaryReplica);
         return replicas.toArray(new ReplicaLoc[replicas.size()]);
     }
 
-    public WriteMsg write(FileContent file) throws RemoteException, IOException{
+    public WriteMsg write(FileContent file) throws RemoteException, IOException {
         Date date = new Date();
         long timestamp = date.getTime();
         if(!primaryReplicas.containsKey(file.getFileName())){
-            int[] rand = new Random().ints(0,replicaServers.size()).distinct().limit(replicaFactor).toArray();
+            int[] rand = new Random().ints(0,replicaServers.size()).distinct().limit(replicationFactor).toArray();
             primaryReplicas.put(file.getFileName(), replicaServers.get(rand[0]));
 
             ArrayList<ReplicaLoc> replicas = new ArrayList<>();
@@ -80,8 +78,7 @@ public class MasterServer implements MasterServerClientInterface {
         return new WriteMsg(++lastTransaction, timestamp, primaryReplicas.get(file.getFileName()));
     }
 
-    public ArrayList<ReplicaLoc> getReplicas(String fileName){
+    public ArrayList<ReplicaLoc> getReplicas(String fileName) {
         return fileToReplicas.get(fileName);
-
     }
 }

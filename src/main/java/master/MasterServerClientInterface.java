@@ -22,7 +22,7 @@ public interface MasterServerClientInterface extends Remote {
 	/**
 	 * Start a new write transaction
 	 * 
-	 * @param fileName
+	 * @param data
 	 * @return the requiref info
 	 * @throws RemoteException
 	 * @throws IOException
