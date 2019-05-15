@@ -31,6 +31,8 @@ public interface ReplicaServerClientInterface extends Remote {
 
     boolean update(FileContent content) throws RemoteException;
 
+    boolean fileExists(final String filename) throws RemoteException;
+
     /**
      *
      * @param txnID
