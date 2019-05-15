@@ -8,19 +8,6 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
 
 public class RmiRunner {
-
-    private RmiRunner() {
-
-    }
-
-    public static RmiRunner getInstance() {
-        return InstanceHolder.INSTANCE;
-    }
-
-    private static class InstanceHolder {
-        private static final RmiRunner INSTANCE = new RmiRunner();
-    }
-
     public RmiRunner(final String rmiServerAddress) throws RemoteException {
         System.setProperty("java.rmi.server.hostname", rmiServerAddress);
     }
@@ -32,7 +19,7 @@ public class RmiRunner {
     public Remote publishStub(final Remote remoteInterface, final String rmiKey,
                                 final int registryPort) throws RemoteException {
         Remote stub = UnicastRemoteObject.exportObject(remoteInterface, registryPort);
-        LocateRegistry.getRegistry().rebind(rmiKey, stub);
+        LocateRegistry.getRegistry(registryPort).rebind(rmiKey, stub);
         return stub;
     }
 
@@ -40,7 +27,7 @@ public class RmiRunner {
         UnicastRemoteObject.unexportObject(remoteInterface, true);
     }
 
-    public Remote lookupStub(final String host, final String rmiKey) throws RemoteException, NotBoundException {
-        return LocateRegistry.getRegistry(host).lookup(rmiKey);
+    public Remote lookupStub(final String host, final int port, final String rmiKey) throws RemoteException, NotBoundException {
+        return LocateRegistry.getRegistry(host, port).lookup(rmiKey);
     }
 }

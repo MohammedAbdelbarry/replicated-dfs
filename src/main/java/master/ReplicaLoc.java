@@ -3,10 +3,12 @@ package master;
 public class ReplicaLoc {
     private String ip;
     private String rmiKey;
+    private int port;
 
-    public ReplicaLoc(String ip, String rmiKey){
+    public ReplicaLoc(final String ip, final String rmiKey, final int port){
         this.ip = ip;
         this.rmiKey = rmiKey;
+        this.port = port;
     }
 
     public String getIp() {
@@ -15,5 +17,9 @@ public class ReplicaLoc {
 
     public String getRmiKey() {
         return rmiKey;
+    }
+
+    public int getPort() {
+        return port;
     }
 }

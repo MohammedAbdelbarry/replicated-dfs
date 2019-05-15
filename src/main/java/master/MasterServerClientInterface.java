@@ -2,6 +2,7 @@ package master;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.rmi.NotBoundException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 
@@ -16,7 +17,7 @@ public interface MasterServerClientInterface extends Remote {
 	 * @throws RemoteException
 	 */
 	public ReplicaLoc[] read(String fileName) throws FileNotFoundException,
-			IOException, RemoteException;
+			IOException, RemoteException, NotBoundException;
 
 	/**
 	 * Start a new write transaction
