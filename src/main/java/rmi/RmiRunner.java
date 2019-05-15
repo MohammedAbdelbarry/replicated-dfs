@@ -12,8 +12,15 @@ public class RmiRunner {
         System.setProperty("java.rmi.server.hostname", rmiServerAddress);
     }
 
-    public void createRegistry(final int registryPort) throws RemoteException {
-        LocateRegistry.createRegistry(registryPort);
+    public boolean createRegistry(final int registryPort) {
+        try {
+            LocateRegistry.createRegistry(registryPort);
+            return true;
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+
+        return false;
     }
 
     public Remote publishStub(final Remote remoteInterface, final String rmiKey,
