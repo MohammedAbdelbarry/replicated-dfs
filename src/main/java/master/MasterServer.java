@@ -30,8 +30,8 @@ public class MasterServer implements MasterServerClientInterface {
             while ((line = bufferReader.readLine()) != null) {
                 String[] tokens = line.split(" ");
                 String replicaHost = tokens[0];
-                String replicaPort = tokens[1];
-                int replicaRmiKey = Integer.parseInt(tokens[2]);
+                int replicaPort = Integer.parseInt(tokens[1]);
+                String replicaRmiKey = tokens[2];
                 replicaServers.add(new ReplicaLoc(replicaHost, replicaPort, replicaRmiKey));
             }
         } catch (Exception ex) {

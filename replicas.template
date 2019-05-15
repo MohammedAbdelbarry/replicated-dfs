@@ -1,6 +1,0 @@
-replica0.host=192.168.1.4
-replica0.port=8080
-replica0.rmiKey=replica
-replica1.host=192.168.1.5
-replica1.port=8080
-replica1.rmiKey=replica

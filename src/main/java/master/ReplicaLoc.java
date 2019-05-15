@@ -1,25 +1,25 @@
 package master;
 
 public class ReplicaLoc {
-    private String ip;
-    private String rmiKey;
+    private String host;
     private int port;
+    private String rmiKey;
 
-    public ReplicaLoc(final String ip, final String rmiKey, final int port){
-        this.ip = ip;
+    public ReplicaLoc(final String host, final int port, final String rmiKey){
+        this.host = host;
         this.rmiKey = rmiKey;
         this.port = port;
     }
 
-    public String getIp() {
-        return ip;
-    }
-
-    public String getRmiKey() {
-        return rmiKey;
+    public String getHost() {
+        return host;
     }
 
     public int getPort() {
         return port;
+    }
+
+    public String getRmiKey() {
+        return rmiKey;
     }
 }
