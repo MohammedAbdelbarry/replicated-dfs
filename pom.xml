@@ -70,7 +70,7 @@
                                         <Bundle-SymbolicName>${project.artifactId}-client</Bundle-SymbolicName>
                                         <Bundle-Version>${project.version}</Bundle-Version>
                                     </manifestEntries>
-                                    <mainClass>MasterServerMain</mainClass>
+                                    <mainClass>client.Client</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>
