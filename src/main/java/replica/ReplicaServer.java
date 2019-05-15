@@ -4,8 +4,12 @@ import master.FileContent;
 import master.MessageNotFoundException;
 import master.WriteMsg;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.OpenOption;
+import java.nio.file.StandardOpenOption;
 import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.Map;
@@ -56,15 +60,23 @@ public class ReplicaServer implements ReplicaServerClientInterface {
         return content;
     }
 
+    public boolean update(FileContent content) throws RemoteException {
+        File file = new File(content.getFileName());
+        try {
+            Files.write(file.toPath(), content.getData().getBytes(), StandardOpenOption.CREATE);
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     public boolean commit(long txnID, long numOfMsgs) throws MessageNotFoundException, RemoteException {
         String fileName = transactionFile.get(txnID);
-        transactionFile.remove(txnID);
-        lockingTransactionLock.lock();
-        lockingTransaction.remove(fileName);
-        lockingTransactionLock.unlock();
         try {
             FileHandler fileHandler = FileHandlerPool.getInstance().getHandler(fileName);
             fileHandler.flush();
+            cleanUp(fileName, txnID);
             return true;
         } catch (IOException e) {
             e.printStackTrace();
@@ -73,6 +85,15 @@ public class ReplicaServer implements ReplicaServerClientInterface {
     }
 
     public boolean abort(long txnID) throws RemoteException {
-        return false;
+        String fileName = transactionFile.get(txnID);
+        cleanUp(fileName, txnID);
+        return true;
+    }
+
+    private void cleanUp(String fileName, long txnID) {
+        transactionFile.remove(txnID);
+        lockingTransactionLock.lock();
+        lockingTransaction.remove(fileName);
+        lockingTransactionLock.unlock();
     }
 }
