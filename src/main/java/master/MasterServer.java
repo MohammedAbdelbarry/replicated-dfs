@@ -1,5 +1,7 @@
 package master;
 
+import common.RmiRunner;
+
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -11,21 +13,18 @@ import java.util.HashMap;
 import java.util.Random;
 
 public class MasterServer implements MasterServerClientInterface {
-
     private HashMap<String, ReplicaLoc> primaryReplicas;
     private ArrayList<ReplicaLoc> replicaServers;
     private long lastTransaction;
 
-
-
-    public MasterServer(String replicaFilePath){
+    public MasterServer(final String configFilePath, final String replicaFilePath){
         primaryReplicas = new HashMap<>();
         replicaServers = new ArrayList<>();
         this.lastTransaction = -1;
         try {
-            BufferedReader bufferreader = new BufferedReader(new FileReader(replicaFilePath));
+            BufferedReader bufferReader = new BufferedReader(new FileReader(replicaFilePath));
             String line;
-            while ((line = bufferreader.readLine()) != null) {
+            while ((line = bufferReader.readLine()) != null) {
                 String[] tokens = line.split(" ");
                 replicaServers.add(new ReplicaLoc(tokens[0], Integer.getInteger(tokens[1])));
             }
@@ -45,11 +44,10 @@ public class MasterServer implements MasterServerClientInterface {
         if(!fileExists){
             throw new FileNotFoundException();
         }
-
         return replicaServers.toArray(new ReplicaLoc[replicaServers.size()]);
     }
 
-    public WriteMsg write(FileContent file) throws RemoteException, IOException{
+    public WriteMsg write(FileContent file) throws RemoteException, IOException {
         Date date = new Date();
         long timestamp = date.getTime();
         if(!primaryReplicas.containsKey(file.getFileName())){

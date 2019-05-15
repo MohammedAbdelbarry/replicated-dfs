@@ -45,7 +45,6 @@ public class ReplicaServer implements ReplicaServerClientInterface {
         fileHandler.getLock().writeLock().lock();
         fileHandler.write(data.getData());
         fileHandler.getLock().writeLock().unlock();
-
         return null;
     }
 
@@ -70,7 +69,6 @@ public class ReplicaServer implements ReplicaServerClientInterface {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
         return false;
     }
 
