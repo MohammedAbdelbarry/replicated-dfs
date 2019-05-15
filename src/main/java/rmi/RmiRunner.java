@@ -1,3 +1,4 @@
+package rmi;
 import java.rmi.NoSuchObjectException;
 import java.rmi.NotBoundException;
 import java.rmi.Remote;

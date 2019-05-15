@@ -27,7 +27,7 @@ public class MasterServer implements MasterServerClientInterface {
             String line;
             while ((line = bufferreader.readLine()) != null) {
                 String[] tokens = line.split(" ");
-                replicaServers.add(new ReplicaLoc(tokens[0], Integer.getInteger(tokens[1])));
+                replicaServers.add(new ReplicaLoc(tokens[0], tokens[1]));
             }
         } catch (Exception ex) {
             ex.printStackTrace();
