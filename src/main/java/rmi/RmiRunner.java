@@ -1,5 +1,7 @@
 package rmi;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.rmi.NoSuchObjectException;
 import java.rmi.NotBoundException;
 import java.rmi.Remote;
@@ -13,6 +15,12 @@ public class RmiRunner {
     }
 
     public static boolean createRegistry(final int registryPort) {
+        try {
+            InetAddress inetAddress = InetAddress.getLocalHost();
+            System.setProperty("java.rmi.server.hostname", inetAddress.getHostAddress());
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
         try {
             LocateRegistry.createRegistry(registryPort);
             return true;
