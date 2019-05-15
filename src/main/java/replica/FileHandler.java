@@ -24,7 +24,9 @@ public class FileHandler {
     private void prepareTempFile(String fileName) throws IOException {
         int key = new Random().nextInt();
         tempPath = Files.createTempFile(fileName, "tmp" + key);
-        Files.copy(file.toPath(), tempPath);
+        if (file.exists()) {
+            Files.copy(file.toPath(), tempPath);
+        }
         System.out.println("Temp(" + file.getPath() + ") = " + tempPath);
         writer = new FileWriter(tempPath.toString(), true);
     }
