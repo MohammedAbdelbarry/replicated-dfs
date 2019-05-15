@@ -2,6 +2,7 @@ package replica;
 
 import master.FileContent;
 import master.MessageNotFoundException;
+import master.ReplicaLoc;
 import master.WriteMsg;
 
 import java.io.File;
@@ -11,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.rmi.RemoteException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
@@ -48,7 +50,6 @@ public class ReplicaServer implements ReplicaServerClientInterface {
         fileHandler.getLock().writeLock().lock();
         fileHandler.write(data.getData());
         fileHandler.getLock().writeLock().unlock();
-
         return null;
     }
 
@@ -81,7 +82,6 @@ public class ReplicaServer implements ReplicaServerClientInterface {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
         return false;
     }
 
@@ -89,6 +89,11 @@ public class ReplicaServer implements ReplicaServerClientInterface {
         String fileName = transactionFile.get(txnID);
         cleanUp(fileName, txnID);
         return true;
+    }
+
+    public boolean fileExists(final String filename) throws RemoteException {
+        File file = new File(filename);
+        return file.exists();
     }
 
     private void cleanUp(String fileName, long txnID) {

@@ -7,13 +7,12 @@ import java.util.Map;
 public class FileHandlerPool {
     private Map<String, FileHandler> handlerMap;
 
-    public FileHandlerPool() {
+    private FileHandlerPool() {
         handlerMap = new HashMap<>();
     }
 
     public FileHandler getHandler(String fileName) throws IOException {
         handlerMap.putIfAbsent(fileName, new FileHandler(fileName));
-
         return handlerMap.get(fileName);
     }
 
