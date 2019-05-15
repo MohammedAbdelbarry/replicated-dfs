@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
@@ -26,7 +27,7 @@ public class MasterServer implements MasterServerClientInterface {
     private HashMap<String, ReplicaLoc> primaryReplicas;
     private HashMap<String, ArrayList<ReplicaLoc>> fileToReplicas;
     private Lock replicaLock;
-    private long lastTransaction;
+    private AtomicLong lastTransaction;
     private int replicationFactor;
     private Timer heartbeatTimer;
 
@@ -37,7 +38,7 @@ public class MasterServer implements MasterServerClientInterface {
         replicaLock = new ReentrantLock();
         heartbeatTimer = new Timer(true);
         this.replicationFactor = replicationFactor;
-        this.lastTransaction = -1;
+        this.lastTransaction = new AtomicLong(-1);
 
         try {
             BufferedReader bufferReader = new BufferedReader(new FileReader(replicasFilePath));
@@ -54,36 +55,46 @@ public class MasterServer implements MasterServerClientInterface {
         }
 
         //TODO: Uncomment this
-        this.trackHeartbeats();
+//        this.trackHeartbeats();
     }
 
     public ReplicaLoc[] read(final String fileName) throws FileNotFoundException,
             IOException, RemoteException, NotBoundException {
+        System.out.println(String.format("Read(%s)", fileName));
         replicaLock.lock();
-        if (!primaryReplicas.containsKey(fileName)){
+        System.out.println(String.format("Lock(%s)", "replicaLock"));
+        if (!primaryReplicas.containsKey(fileName)) {
+            System.out.println(String.format("No-Primary-Replica(%s)", fileName));
+            replicaLock.unlock();
             throw new FileNotFoundException();
         }
 
         ReplicaLoc primaryReplica = primaryReplicas.get(fileName);
 
-        // call primary replica to check if file exists 
+        // call primary replica to check if file exists
         ReplicaServerClientInterface primaryReplicaStub = (ReplicaServerClientInterface) RmiRunner.lookupStub(primaryReplica.getHost(),
                                                                 primaryReplica.getPort(), primaryReplica.getRmiKey());
 
-        if (!primaryReplicaStub.fileExists(fileName))
+        if (!primaryReplicaStub.fileExists(fileName)) {
+            System.out.println(String.format("No-File(%s)", fileName));
+            replicaLock.unlock();
             throw new FileNotFoundException();
+        }
 
         ArrayList<ReplicaLoc> replicas = new ArrayList<>(fileToReplicas.get(fileName));
         replicaLock.unlock();
+        System.out.println(String.format("Unlock(%s)", "replicaLock"));
         replicas.add(primaryReplica);
         return replicas.toArray(new ReplicaLoc[replicas.size()]);
     }
 
     public WriteMsg write(FileContent file) throws RemoteException, IOException {
+        System.out.println(String.format("Write(%s)", file.getFileName()));
         Date date = new Date();
         long timestamp = date.getTime();
 
         replicaLock.lock();
+        System.out.println(String.format("Lock(%s)", file.getFileName()));
         if (!primaryReplicas.containsKey(file.getFileName())) {
             int[] rand = new Random().ints(0,replicaServers.size()).distinct().limit(replicationFactor).toArray();
             primaryReplicas.put(file.getFileName(), replicaServers.get(rand[0]));
@@ -96,8 +107,9 @@ public class MasterServer implements MasterServerClientInterface {
         }
         ReplicaLoc primaryReplica = primaryReplicas.get(file.getFileName());
         replicaLock.unlock();
+        System.out.println(String.format("Unlock(%s)", file.getFileName()));
 
-        return new WriteMsg(++lastTransaction, timestamp, primaryReplica);
+        return new WriteMsg(lastTransaction.incrementAndGet(), timestamp, primaryReplica);
     }
 
     public Collection<ReplicaLoc> getReplicas(String fileName) {
