@@ -12,7 +12,7 @@ public class ServerMainTest {
 
     public static void main(String[] args) {
         try {
-            RmiRunner serverRmiRunner = new RmiRunner(RMI_SERVER_ADDR);
+            RmiRunner serverRmiRunner = new RmiRunner();
             serverRmiRunner.createRegistry(RMI_SERVER_PORT);
 
             /* Server */
@@ -23,11 +23,11 @@ public class ServerMainTest {
             /* Clients */
             ExecutorService executorService = Executors.newFixedThreadPool(5);
             for (int i = 0; i < 5; i++) {
-                RmiRunner clientRmiRunner = new RmiRunner(RMI_SERVER_ADDR);
+                RmiRunner clientRmiRunner = new RmiRunner();
                 executorService.submit(() -> {
                     RemoteTestInterface stub = null;
                     try {
-                        stub = (RemoteTestInterface) clientRmiRunner.lookupStub("localhost", RMI_SERVER_PORT, "test");
+                        stub = (RemoteTestInterface) clientRmiRunner.lookupStub(RMI_SERVER_ADDR, RMI_SERVER_PORT, "test");
                         System.out.println(stub.read());
                     } catch (RemoteException | NotBoundException e) {
                         e.printStackTrace();

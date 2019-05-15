@@ -8,8 +8,8 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
 
 public class RmiRunner {
-    public RmiRunner(final String rmiServerAddress) throws RemoteException {
-        System.setProperty("java.rmi.server.hostname", rmiServerAddress);
+    public RmiRunner() {
+
     }
 
     public void createRegistry(final int registryPort) throws RemoteException {

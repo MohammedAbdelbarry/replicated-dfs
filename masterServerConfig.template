@@ -1,0 +1,5 @@
+rmi.port=8080
+rmi.key=master
+rmi.replication.factor=3
+rm.replicas.filepath=replicas.properties
+

@@ -1,8 +1,5 @@
 package master;
 
-import replica.ReplicaServerClientInterface;
-import rmi.RmiRunner;
-
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -19,16 +16,16 @@ public class MasterServer implements MasterServerClientInterface {
     private ArrayList<ReplicaLoc> replicaServers;
     private HashMap<String, ArrayList<ReplicaLoc>> fileToReplicas;
     private long lastTransaction;
-    private int replicaFactor;
+    private int replicationFactor;
 
-    public MasterServer(final String replicaFilePath, final int replicaFactor){
+    public MasterServer(final String replicasFilePath, final int replicationFactor) {
         fileToReplicas = new HashMap<>();
         primaryReplicas = new HashMap<>();
         replicaServers = new ArrayList<>();
-        this.replicaFactor = replicaFactor;
+        this.replicationFactor = replicationFactor;
         this.lastTransaction = -1;
         try {
-            BufferedReader bufferReader = new BufferedReader(new FileReader(replicaFilePath));
+            BufferedReader bufferReader = new BufferedReader(new FileReader(replicasFilePath));
             String line;
             while ((line = bufferReader.readLine()) != null) {
                 String[] tokens = line.split(" ");
@@ -51,9 +48,9 @@ public class MasterServer implements MasterServerClientInterface {
         ReplicaLoc primaryReplica = primaryReplicas.get(fileName);
 
         // call primary replica to check if file exists replicaLoc.getIp();
-        RmiRunner rmiRunner = new RmiRunner(primaryReplica.getIp());
-        ReplicaServerClientInterface primaryReplicaStub = (ReplicaServerClientInterface) rmiRunner.lookupStub(primaryReplica.getIp(),
-                                                                primaryReplica.getPort(), primaryReplica.getRmiKey());
+//        RmiRunner rmiRunner = new RmiRunner(primaryReplica.getIp());
+//        ReplicaServerClientInterface primaryReplicaStub = (ReplicaServerClientInterface) rmiRunner.lookupStub(primaryReplica.getIp(),
+//                                                                primaryReplica.getPort(), primaryReplica.getRmiKey());
 
         //boolean fileExists = primaryReplicaStub.fileExists(fileName);
         boolean fileExists = true;
@@ -69,7 +66,7 @@ public class MasterServer implements MasterServerClientInterface {
         Date date = new Date();
         long timestamp = date.getTime();
         if(!primaryReplicas.containsKey(file.getFileName())){
-            int[] rand = new Random().ints(0,replicaServers.size()).distinct().limit(replicaFactor).toArray();
+            int[] rand = new Random().ints(0,replicaServers.size()).distinct().limit(replicationFactor).toArray();
             primaryReplicas.put(file.getFileName(), replicaServers.get(rand[0]));
 
             ArrayList<ReplicaLoc> replicas = new ArrayList<>();
@@ -81,8 +78,7 @@ public class MasterServer implements MasterServerClientInterface {
         return new WriteMsg(lastTransaction++, timestamp, primaryReplicas.get(file.getFileName()));
     }
 
-    public ArrayList<ReplicaLoc> getReplicas(String fileName){
+    public ArrayList<ReplicaLoc> getReplicas(String fileName) {
         return fileToReplicas.get(fileName);
-
     }
 }
