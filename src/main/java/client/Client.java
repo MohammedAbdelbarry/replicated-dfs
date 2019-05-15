@@ -1,10 +1,12 @@
 package client;
 
+import com.sun.javaws.exceptions.InvalidArgumentException;
 import master.*;
 import replica.ReplicaServer;
 import replica.ReplicaServerClientInterface;
 import rmi.RmiRunner;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -60,5 +62,48 @@ public class Client {
     public Transaction createTransaction(){
         return new Transaction();
     }
+
+
+    public static void main(String[] args) throws IOException, NotBoundException, MessageNotFoundException, InvalidArgumentException {
+
+        if(args.length != 3){
+            throw new InvalidArgumentException(args);
+        }
+        
+        String host = args[0];
+        int port = Integer.parseInt(args[1]);
+        String rmiKey = args[2];
+
+        String fileName = "file.txt";
+
+        ReplicaLoc replicaLoc = new ReplicaLoc(host, port, rmiKey);
+        Client client = new Client(replicaLoc);
+
+        try{
+            client.read(fileName);
+        } catch(FileNotFoundException e){
+            System.out.println("File doesn't exist as expected");
+        } catch (Exception e){
+            throw e;
+        }
+
+        Transaction t = client.createTransaction();
+        t.addWrite(new FileContent(fileName, "datadatadata1"));
+        t.addWrite(new FileContent(fileName, "datadatadata2"));
+
+
+        t.commit();
+
+        try{
+            client.read(fileName);
+        } catch(FileNotFoundException e){
+            System.out.println("File doesn't exist");
+        } catch (Exception e){
+            throw e;
+        }
+
+
+    }
+
 
 }
