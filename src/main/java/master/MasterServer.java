@@ -77,7 +77,7 @@ public class MasterServer implements MasterServerClientInterface {
             }
             fileToReplicas.put(file.getFileName(), replicas);
         }
-        return new WriteMsg(lastTransaction++, timestamp, primaryReplicas.get(file.getFileName()));
+        return new WriteMsg(++lastTransaction, timestamp, primaryReplicas.get(file.getFileName()));
     }
 
     public ArrayList<ReplicaLoc> getReplicas(String fileName){

@@ -1,8 +1,6 @@
 package client;
 
-import master.FileContent;
-import master.MasterServerClientInterface;
-import master.ReplicaLoc;
+import master.*;
 import replica.ReplicaServer;
 import replica.ReplicaServerClientInterface;
 import rmi.RmiRunner;
@@ -13,23 +11,38 @@ import java.rmi.RemoteException;
 
 public class Client {
 
-
     public class Transaction {
 
-        private int size;
+        private MasterServerClientInterface master;
 
+        private WriteMsg writeMsg;
+        private ReplicaServerClientInterface primaryReplicaStub;
+        private int seqNo;
 
-        public void addWrite(FileContent file) {
-
+        public Transaction(){
+            writeMsg = null;
+            primaryReplicaStub = null;
         }
 
-        public boolean commit(){
-
+        public void addWrite(FileContent file) throws IOException, NotBoundException {
+            if(primaryReplicaStub != null && writeMsg == null){
+                WriteMsg writeMsg = master.write(file);
+                RmiRunner rmiRunner = new RmiRunner(writeMsg.getLoc().getIp());
+                primaryReplicaStub = (ReplicaServerClientInterface) rmiRunner.lookupStub(writeMsg.getLoc().getIp());
+                primaryReplicaStub.write(writeMsg.getTransactionId(), seqNo++, file);
+            }else{
+                primaryReplicaStub.write(writeMsg.getTransactionId(), seqNo++, file);
+            }
         }
 
-
+        public boolean commit() throws MessageNotFoundException, RemoteException {
+            if(primaryReplicaStub != null && writeMsg != null){
+                return primaryReplicaStub.commit(writeMsg.getTransactionId(), seqNo);
+            }else{
+                return true; //empty transaction
+            }
+        }
     }
-
 
 
     private ReplicaLoc master;
@@ -48,12 +61,8 @@ public class Client {
         return primaryReplicaStub.read(fileName);
     }
 
-
-    public
-
-
-
-
-
+    public Transaction createTransaction(){
+        return new Transaction();
+    }
 
 }
