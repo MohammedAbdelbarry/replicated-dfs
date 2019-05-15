@@ -1,4 +1,4 @@
-import master.MasterServer;
+import master.MasterServerClientInterface;
 import replica.ReplicaServer;
 import rmi.RmiRunner;
 
@@ -16,9 +16,9 @@ public class ReplicaServerMain {
         String serverHost = args[2];
         int serverPort = Integer.parseInt(args[3]);
         String serverRmiKey = args[4];
-        MasterServer masterServerStub;
+        MasterServerClientInterface masterServerStub;
         try {
-            masterServerStub = (MasterServer) RmiRunner.lookupStub(serverHost, serverPort, serverRmiKey);
+            masterServerStub = (MasterServerClientInterface) RmiRunner.lookupStub(serverHost, serverPort, serverRmiKey);
         } catch (RemoteException | NotBoundException e) {
             System.out.println(String.format("Cannot find master server stub on host: %s port: %d RMI key: %s",
                                                 serverHost, serverPort, serverRmiKey));
