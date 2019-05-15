@@ -12,7 +12,7 @@ public class RmiRunner {
 
     }
 
-    public boolean createRegistry(final int registryPort) {
+    public static boolean createRegistry(final int registryPort) {
         try {
             LocateRegistry.createRegistry(registryPort);
             return true;
@@ -23,18 +23,18 @@ public class RmiRunner {
         return false;
     }
 
-    public Remote publishStub(final Remote remoteInterface, final String rmiKey,
+    public static Remote publishStub(final Remote remoteInterface, final String rmiKey,
                                 final int registryPort) throws RemoteException {
         Remote stub = UnicastRemoteObject.exportObject(remoteInterface, registryPort);
         LocateRegistry.getRegistry(registryPort).rebind(rmiKey, stub);
         return stub;
     }
 
-    public void unpublishStub(final Remote remoteInterface) throws NoSuchObjectException {
+    public static void unpublishStub(final Remote remoteInterface) throws NoSuchObjectException {
         UnicastRemoteObject.unexportObject(remoteInterface, true);
     }
 
-    public Remote lookupStub(final String host, final int port, final String rmiKey) throws RemoteException, NotBoundException {
+    public static Remote lookupStub(final String host, final int port, final String rmiKey) throws RemoteException, NotBoundException {
         return LocateRegistry.getRegistry(host, port).lookup(rmiKey);
     }
 }

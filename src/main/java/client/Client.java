@@ -27,8 +27,7 @@ public class Client {
         public void addWrite(FileContent file) throws IOException, NotBoundException {
             if(primaryReplicaStub != null && writeMsg == null){
                 WriteMsg writeMsg = master.write(file);
-                RmiRunner rmiRunner = new RmiRunner(writeMsg.getLoc().getIp());
-                primaryReplicaStub = (ReplicaServerClientInterface) rmiRunner.lookupStub(writeMsg.getLoc().getIp());
+                primaryReplicaStub = (ReplicaServerClientInterface) RmiRunner.lookupStub(writeMsg.getLoc().getHost(), writeMsg.getLoc().getPort(), writeMsg.getLoc().getRmiKey());
                 primaryReplicaStub.write(writeMsg.getTransactionId(), seqNo++, file);
             }else{
                 primaryReplicaStub.write(writeMsg.getTransactionId(), seqNo++, file);
@@ -43,21 +42,18 @@ public class Client {
             }
         }
     }
-
-
+    
     private ReplicaLoc master;
     private MasterServerClientInterface masterStub;
 
     public Client(ReplicaLoc master) throws RemoteException, NotBoundException {
         this.master = master;
-        RmiRunner rmiRunner = new RmiRunner(master.getIp());
-        masterStub = (MasterServerClientInterface) rmiRunner.lookupStub(master.getRmiKey());
+        masterStub = (MasterServerClientInterface) RmiRunner.lookupStub(master.getHost(), master.getPort(), master.getRmiKey());
     }
 
     public FileContent read(String fileName) throws IOException, NotBoundException {
         ReplicaLoc[] replicaLocs = masterStub.read(fileName);
-        RmiRunner rmiRunner = new RmiRunner(replicaLocs[0].getIp());
-        ReplicaServerClientInterface primaryReplicaStub = (ReplicaServerClientInterface) rmiRunner.lookupStub(replicaLocs[0].getRmiKey());
+        ReplicaServerClientInterface primaryReplicaStub = (ReplicaServerClientInterface) RmiRunner.lookupStub(replicaLocs[0].getHost(), replicaLocs[0].getPort(), replicaLocs[0].getRmiKey());
         return primaryReplicaStub.read(fileName);
     }
 
