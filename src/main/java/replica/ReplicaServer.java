@@ -111,8 +111,8 @@ public class ReplicaServer implements ReplicaServerClientInterface {
                     String data = new String(Files.readAllBytes(new File(filePath).toPath()));
                     replicaServer.update(new FileContent(fileName, data));
                     System.out.println(String.format("Updated(%s, %s)", replica.getRmiKey(), fileName));
-                } catch (NotBoundException e) {
-                    e.printStackTrace();
+                } catch (NotBoundException | RemoteException ignored) {
+
                 }
 
             }

@@ -55,8 +55,7 @@ public class MasterServer implements MasterServerClientInterface {
             ex.printStackTrace();
         }
 
-        //TODO: Uncomment this
-//        this.trackHeartbeats();
+        this.trackHeartbeats();
     }
 
     public ReplicaLoc[] read(final String fileName) throws FileNotFoundException,
@@ -126,9 +125,8 @@ public class MasterServer implements MasterServerClientInterface {
             public void run() {
                 replicaLock.lock();
                 replicaServers.forEach(replicaServer -> {
-                    RmiRunner replicaRmiRunner = new RmiRunner();
                     try {
-                        ReplicaServerClientInterface stub = (ReplicaServerClientInterface) replicaRmiRunner.lookupStub(
+                        ReplicaServerClientInterface stub = (ReplicaServerClientInterface) RmiRunner.lookupStub(
                                 replicaServer.getHost(), replicaServer.getPort(), replicaServer.getRmiKey());
                         stub.isAlive();
                     } catch (RemoteException | NotBoundException e) {
@@ -139,6 +137,10 @@ public class MasterServer implements MasterServerClientInterface {
                                 file -> primaryReplicas.get(file).equals(replicaServer)).collect(Collectors.toList());
                         filesInFailingReplica.forEach(file -> primaryReplicas.put(
                                 file, replicaServers.get(new Random().nextInt(replicaServers.size()))));
+
+                        filesInFailingReplica.forEach(file -> System.out.println(
+                                "Migrating file " + file + " to " + primaryReplicas.get(file)));
+
                         filesInFailingReplica.forEach(file -> {
                             fileToReplicas.get(file).remove(primaryReplicas.get(file));
                             fileToReplicas.get(file).add(replicaServer);
