@@ -1,21 +1,19 @@
 package master;
 
-import java.net.InetAddress;
-
 public class ReplicaLoc {
     private String ip;
-    private int port;
+    private String rmiKey;
 
-    public ReplicaLoc(String ip, int port){
+    public ReplicaLoc(String ip, String rmiKey){
         this.ip = ip;
-        this.port = port;
+        this.rmiKey = rmiKey;
     }
 
     public String getIp() {
         return ip;
     }
 
-    public int getPort() {
-        return port;
+    public String getRmiKey() {
+        return rmiKey;
     }
 }

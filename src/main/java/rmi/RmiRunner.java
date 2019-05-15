@@ -1,4 +1,4 @@
-package common;
+package rmi;
 
 import java.rmi.NoSuchObjectException;
 import java.rmi.NotBoundException;
@@ -8,6 +8,7 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
 
 public class RmiRunner {
+
     private RmiRunner() {
 
     }
