@@ -1,7 +1,10 @@
 package client;
 
-import master.*;
-import replica.ReplicaServer;
+import master.FileContent;
+import master.MasterServerClientInterface;
+import master.MessageNotFoundException;
+import master.ReplicaLoc;
+import master.WriteMsg;
 import replica.ReplicaServerClientInterface;
 import rmi.RmiRunner;
 

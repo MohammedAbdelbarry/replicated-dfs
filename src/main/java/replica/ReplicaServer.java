@@ -1,7 +1,7 @@
 package replica;
 
 import master.FileContent;
-import master.MasterServer;
+import master.MasterServerClientInterface;
 import master.MessageNotFoundException;
 import master.ReplicaLoc;
 import master.WriteMsg;
@@ -23,12 +23,12 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class ReplicaServer implements ReplicaServerClientInterface {
     private static final int SLEEP_DURATION = 100;
-    private MasterServer masterServerStub;
+    private MasterServerClientInterface masterServerStub;
     private Map<String, Long> lockingTransaction;
     private Map<Long, String> transactionFile;
     private Lock lockingTransactionLock;
 
-    public ReplicaServer(final MasterServer masterServerStub) {
+    public ReplicaServer(final MasterServerClientInterface masterServerStub) {
         this.masterServerStub = masterServerStub;
         lockingTransaction = new HashMap<>();
         transactionFile = new ConcurrentHashMap<>();

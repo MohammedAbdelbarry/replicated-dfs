@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Random;
@@ -78,7 +79,7 @@ public class MasterServer implements MasterServerClientInterface {
         return new WriteMsg(++lastTransaction, timestamp, primaryReplicas.get(file.getFileName()));
     }
 
-    public ArrayList<ReplicaLoc> getReplicas(String fileName) {
+    public Collection<ReplicaLoc> getReplicas(String fileName) {
         return fileToReplicas.get(fileName);
     }
 }

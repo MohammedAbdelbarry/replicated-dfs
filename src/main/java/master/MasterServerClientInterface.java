@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.rmi.NotBoundException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
+import java.util.Collection;
 
 public interface MasterServerClientInterface extends Remote {
 	/**
@@ -29,4 +30,5 @@ public interface MasterServerClientInterface extends Remote {
 	 */
 	public WriteMsg write(FileContent data) throws RemoteException, IOException;
 
+	public Collection<ReplicaLoc> getReplicas(String fileName) throws RemoteException;
 }

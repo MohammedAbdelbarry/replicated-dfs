@@ -1,6 +1,11 @@
 package master;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Properties;
 
 public class MasterConfiguration {
@@ -11,7 +16,7 @@ public class MasterConfiguration {
     private static final String RMI_KEY_KEY = "rmi.key";
     private static final String RMI_KEY_VALUE = "master";
     private static final String REPLICAS_FILEPATH_KEY = "rm.replicas.filepath";
-    private static final String REPLICAS_FILEPATH_VALUE = "replicas.properties";
+    private static final String REPLICAS_FILEPATH_VALUE = "replicasConfig.txt";
 
     private int rmiPort;
     private String rmiKey;
