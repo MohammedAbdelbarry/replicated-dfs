@@ -14,10 +14,9 @@ public class ReplicaServerMain {
         String serverHost = args[2];
         int serverPort = Integer.parseInt(args[3]);
         ReplicaServer replicaServer = new ReplicaServer(serverHost, serverPort);
-        RmiRunner rmiRunner = new RmiRunner();
-        rmiRunner.createRegistry(rmiPort);
+        RmiRunner.createRegistry(rmiPort);
         try {
-            rmiRunner.publishStub(replicaServer, rmiKey, rmiPort);
+            RmiRunner.publishStub(replicaServer, rmiKey, rmiPort);
         } catch (RemoteException e) {
             e.printStackTrace();
         }

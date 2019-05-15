@@ -12,12 +12,11 @@ public class ServerMainTest {
 
     public static void main(String[] args) {
         try {
-            RmiRunner serverRmiRunner = new RmiRunner();
-            serverRmiRunner.createRegistry(RMI_SERVER_PORT);
+            RmiRunner.createRegistry(RMI_SERVER_PORT);
 
             /* Server */
             RemoteTestInterfaceImpl impl = new RemoteTestInterfaceImpl();
-            RemoteTestInterface stubUnused = (RemoteTestInterface) serverRmiRunner.publishStub(impl, "test", RMI_SERVER_PORT);
+            RemoteTestInterface stubUnused = (RemoteTestInterface) RmiRunner.publishStub(impl, "test", RMI_SERVER_PORT);
             System.out.println("Published interface \"test\"");
 
             /* Clients */
@@ -27,7 +26,7 @@ public class ServerMainTest {
                 executorService.submit(() -> {
                     RemoteTestInterface stub = null;
                     try {
-                        stub = (RemoteTestInterface) clientRmiRunner.lookupStub(RMI_SERVER_ADDR, RMI_SERVER_PORT, "test");
+                        stub = (RemoteTestInterface) RmiRunner.lookupStub(RMI_SERVER_ADDR, RMI_SERVER_PORT, "test");
                         System.out.println(stub.read());
                     } catch (RemoteException | NotBoundException e) {
                         e.printStackTrace();
@@ -38,7 +37,7 @@ public class ServerMainTest {
             /* Server */
             executorService.shutdown();
             executorService.awaitTermination(3, TimeUnit.SECONDS);
-            serverRmiRunner.unpublishStub(impl);
+            RmiRunner.unpublishStub(impl);
         } catch (RemoteException | InterruptedException e) {
             e.printStackTrace();
         }
