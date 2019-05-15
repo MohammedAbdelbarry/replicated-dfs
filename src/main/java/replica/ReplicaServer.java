@@ -1,30 +1,35 @@
 package replica;
 
 import master.FileContent;
+import master.MasterServer;
 import master.MessageNotFoundException;
 import master.ReplicaLoc;
 import master.WriteMsg;
+import rmi.RmiRunner;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class ReplicaServer implements ReplicaServerClientInterface {
     private static final int SLEEP_DURATION = 100;
+    private MasterServer masterServerStub;
     private Map<String, Long> lockingTransaction;
     private Map<Long, String> transactionFile;
     private Lock lockingTransactionLock;
 
-    public ReplicaServer() {
+    public ReplicaServer(final MasterServer masterServerStub) {
+        this.masterServerStub = masterServerStub;
         lockingTransaction = new HashMap<>();
         transactionFile = new ConcurrentHashMap<>();
         lockingTransactionLock = new ReentrantLock();
@@ -74,14 +79,34 @@ public class ReplicaServer implements ReplicaServerClientInterface {
 
     public boolean commit(long txnID, long numOfMsgs) throws MessageNotFoundException, RemoteException {
         String fileName = transactionFile.get(txnID);
+        ReadWriteLock lock = null;
         try {
             FileHandler fileHandler = FileHandlerPool.getInstance().getHandler(fileName);
+            lock = fileHandler.getLock();
+            lock.writeLock().lock();
             fileHandler.flush();
+            for (ReplicaLoc replica : masterServerStub.getReplicas(fileName)) {
+                try {
+                    ReplicaServerClientInterface replicaServer = (ReplicaServerClientInterface) RmiRunner.lookupStub(replica.getHost(),
+                            replica.getPort(), replica.getRmiKey());
+                    String data = new String(Files.readAllBytes(new File(fileName).toPath()));
+                    replicaServer.update(new FileContent(fileName, data));
+                } catch (NotBoundException e) {
+                    e.printStackTrace();
+                }
+
+            }
             cleanUp(fileName, txnID);
+            lock.writeLock().unlock();
             return true;
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        if (lock != null) {
+            lock.writeLock().unlock();
+        }
+
         return false;
     }
 

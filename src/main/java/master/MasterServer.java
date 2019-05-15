@@ -56,14 +56,11 @@ public class MasterServer implements MasterServerClientInterface {
 
         ReplicaLoc primaryReplica = primaryReplicas.get(fileName);
 
-        // call primary replica to check if file exists replicaLoc.getIp();
-//        RmiRunner rmiRunner = new RmiRunner(primaryReplica.getIp());
-//        ReplicaServerClientInterface primaryReplicaStub = (ReplicaServerClientInterface) rmiRunner.lookupStub(primaryReplica.getIp(),
-//                                                                primaryReplica.getPort(), primaryReplica.getRmiKey());
+        // call primary replica to check if file exists 
+        ReplicaServerClientInterface primaryReplicaStub = (ReplicaServerClientInterface) RmiRunner.lookupStub(primaryReplica.getHost(),
+                                                                primaryReplica.getPort(), primaryReplica.getRmiKey());
 
-        //boolean fileExists = primaryReplicaStub.fileExists(fileName);
-        boolean fileExists = true;
-        if(!fileExists){
+        if(!primaryReplicaStub.fileExists(fileName)){
             throw new FileNotFoundException();
         }
         ArrayList<ReplicaLoc> replicas = new ArrayList<>(fileToReplicas.get(fileName));
@@ -85,7 +82,7 @@ public class MasterServer implements MasterServerClientInterface {
             }
             fileToReplicas.put(file.getFileName(), replicas);
         }
-        return new WriteMsg(lastTransaction++, timestamp, primaryReplicas.get(file.getFileName()));
+        return new WriteMsg(++lastTransaction, timestamp, primaryReplicas.get(file.getFileName()));
     }
 
     public ArrayList<ReplicaLoc> getReplicas(String fileName) {
