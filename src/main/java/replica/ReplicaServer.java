@@ -20,11 +20,15 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class ReplicaServer implements ReplicaServerClientInterface {
     private static final int SLEEP_DURATION = 100;
+    private String serverHost;
+    private int serverPort;
     private Map<String, Long> lockingTransaction;
     private Map<Long, String> transactionFile;
     private Lock lockingTransactionLock;
 
-    public ReplicaServer() {
+    public ReplicaServer(final String serverHost, final int serverPort) {
+        this.serverHost = serverHost;
+        this.serverPort = serverPort;
         lockingTransaction = new HashMap<>();
         transactionFile = new ConcurrentHashMap<>();
         lockingTransactionLock = new ReentrantLock();
