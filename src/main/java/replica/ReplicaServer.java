@@ -27,18 +27,24 @@ public class ReplicaServer implements ReplicaServerClientInterface {
     private Map<String, Long> lockingTransaction;
     private Map<Long, String> transactionFile;
     private Lock lockingTransactionLock;
+    private String replicaKey;
 
-    public ReplicaServer(final MasterServerClientInterface masterServerStub) {
+    public ReplicaServer(String replicaKey, final MasterServerClientInterface masterServerStub) {
         this.masterServerStub = masterServerStub;
         lockingTransaction = new HashMap<>();
         transactionFile = new ConcurrentHashMap<>();
         lockingTransactionLock = new ReentrantLock();
+        this.replicaKey = replicaKey;
+        new File(replicaKey).mkdir();
     }
 
     public WriteMsg write(long txnID, long msgSeqNum, FileContent data) throws RemoteException, IOException {
-        transactionFile.putIfAbsent(txnID, data.getFileName());
+       String fileName = replicaKey + File.separator + data.getFileName();
+        System.out.println(String.format("Write(%d, %s)", txnID, fileName));
+        transactionFile.putIfAbsent(txnID, fileName);
         lockingTransactionLock.lock();
-        while (lockingTransaction.containsKey(data.getFileName()) && lockingTransaction.get(data.getFileName()) != txnID) {
+        System.out.println(String.format("Lock(%d, %s)", txnID, "lockingTransactionLock"));
+        while (lockingTransaction.containsKey(fileName) && lockingTransaction.get(fileName) != txnID) {
             lockingTransactionLock.unlock();
             try {
                 Thread.sleep(SLEEP_DURATION);
@@ -47,27 +53,36 @@ public class ReplicaServer implements ReplicaServerClientInterface {
             }
             lockingTransactionLock.lock();
         }
-        lockingTransaction.put(data.getFileName(), txnID);
+        lockingTransaction.put(fileName, txnID);
         lockingTransactionLock.unlock();
+        System.out.println(String.format("Unlock(%d, %s)", txnID, "lockingTransactionLock"));
 
-        FileHandler fileHandler = FileHandlerPool.getInstance().getHandler(data.getFileName());
+        FileHandler fileHandler = FileHandlerPool.getInstance().getHandler(fileName);
 
         fileHandler.getLock().writeLock().lock();
+        System.out.println(String.format("Write-Lock(%d, %s)", txnID, fileName));
         fileHandler.write(data.getData());
         fileHandler.getLock().writeLock().unlock();
+        System.out.println(String.format("Write-Unlock(%d, %s)", txnID, fileName));
         return null;
     }
 
     public FileContent read(String fileName) throws FileNotFoundException, IOException, RemoteException {
+        fileName = replicaKey + File.separator + fileName;
+        System.out.println(String.format("Read(%s)", fileName));
         FileHandler fileHandler = FileHandlerPool.getInstance().getHandler(fileName);
         fileHandler.getLock().readLock().lock();
+        System.out.println(String.format("Read-Lock(%s)", fileName));
         FileContent content = new FileContent(fileName, fileHandler.read());
         fileHandler.getLock().readLock().unlock();
+        System.out.println(String.format("Read-Unlock(%s)", fileName));
         return content;
     }
 
     public boolean update(FileContent content) throws RemoteException {
-        File file = new File(content.getFileName());
+        String fileName = replicaKey + File.separator + content.getFileName();
+        File file = new File(fileName);
+        System.out.println(String.format("Update(%s)", fileName));
         try {
             Files.write(file.toPath(), content.getData().getBytes(), StandardOpenOption.CREATE);
             return true;
@@ -78,26 +93,32 @@ public class ReplicaServer implements ReplicaServerClientInterface {
     }
 
     public boolean commit(long txnID, long numOfMsgs) throws MessageNotFoundException, RemoteException {
-        String fileName = transactionFile.get(txnID);
+        String filePath = transactionFile.get(txnID);
+        String fileName = filePath.substring(filePath.lastIndexOf(File.separator) + 1);
+        System.out.println(String.format("Commit(%s)", filePath));
         ReadWriteLock lock = null;
         try {
-            FileHandler fileHandler = FileHandlerPool.getInstance().getHandler(fileName);
+            FileHandler fileHandler = FileHandlerPool.getInstance().getHandler(filePath);
             lock = fileHandler.getLock();
             lock.writeLock().lock();
+            System.out.println(String.format("Write-Lock(%d, %s)", txnID, filePath));
             fileHandler.flush();
             for (ReplicaLoc replica : masterServerStub.getReplicas(fileName)) {
                 try {
+                    System.out.println(String.format("Try-Update(%s, %s)", replica.getRmiKey(), fileName));
                     ReplicaServerClientInterface replicaServer = (ReplicaServerClientInterface) RmiRunner.lookupStub(replica.getHost(),
                             replica.getPort(), replica.getRmiKey());
-                    String data = new String(Files.readAllBytes(new File(fileName).toPath()));
+                    String data = new String(Files.readAllBytes(new File(filePath).toPath()));
                     replicaServer.update(new FileContent(fileName, data));
-                } catch (NotBoundException e) {
-                    e.printStackTrace();
+                    System.out.println(String.format("Updated(%s, %s)", replica.getRmiKey(), fileName));
+                } catch (NotBoundException | RemoteException ignored) {
+
                 }
 
             }
-            cleanUp(fileName, txnID);
+            cleanUp(filePath, txnID);
             lock.writeLock().unlock();
+            System.out.println(String.format("Write-Unlock(%d, %s)", txnID, filePath));
             return true;
         } catch (IOException e) {
             e.printStackTrace();
@@ -105,6 +126,7 @@ public class ReplicaServer implements ReplicaServerClientInterface {
 
         if (lock != null) {
             lock.writeLock().unlock();
+            System.out.println(String.format("Write-Unlock(%d, %s)", txnID, filePath));
         }
 
         return false;
@@ -117,7 +139,7 @@ public class ReplicaServer implements ReplicaServerClientInterface {
     }
 
     public boolean fileExists(final String filename) throws RemoteException {
-        File file = new File(filename);
+        File file = new File(replicaKey + File.separator + filename);
         return file.exists();
     }
 

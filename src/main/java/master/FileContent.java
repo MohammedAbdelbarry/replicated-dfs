@@ -20,4 +20,12 @@ public class FileContent implements Serializable {
     public String getData() {
         return data;
     }
+
+    @Override
+    public String toString() {
+        return "FileContent(" +
+                "fileName='" + fileName + '\'' +
+                ", data='" + data + '\'' +
+                ')';
+    }
 }

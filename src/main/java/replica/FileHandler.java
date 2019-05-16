@@ -5,6 +5,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Random;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -23,8 +24,10 @@ public class FileHandler {
 
     private void prepareTempFile(String fileName) throws IOException {
         int key = new Random().nextInt();
-        tempPath = Files.createTempFile(fileName, "tmp" + key);
-        Files.copy(file.toPath(), tempPath);
+        tempPath = Files.createTempFile(fileName.substring(fileName.lastIndexOf(File.separator) + 1), "tmp" + key);
+        if (file.exists()) {
+            Files.copy(file.toPath(), tempPath, StandardCopyOption.REPLACE_EXISTING);
+        }
         System.out.println("Temp(" + file.getPath() + ") = " + tempPath);
         writer = new FileWriter(tempPath.toString(), true);
     }
@@ -45,7 +48,7 @@ public class FileHandler {
     public void flush() throws IOException {
         writer.flush();
         writer.close();
-        Files.copy(tempPath, file.toPath());
+        Files.copy(tempPath, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
         Files.delete(tempPath);
         prepareTempFile(file.getName());
     }

@@ -12,7 +12,9 @@ public class FileHandlerPool {
     }
 
     public FileHandler getHandler(String fileName) throws IOException {
-        handlerMap.putIfAbsent(fileName, new FileHandler(fileName));
+        if (!handlerMap.containsKey(fileName)) {
+            handlerMap.putIfAbsent(fileName, new FileHandler(fileName));
+        }
         return handlerMap.get(fileName);
     }
 
